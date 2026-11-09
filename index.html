@@ -1,0 +1,166 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#FFC629"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><title>Meet</title>
+<style>
+:root{--y:#FFC629;--r:#ff4458;--g:#21d07a;--ink:#1d1d1f;--p:#ff6b81}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none;font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:linear-gradient(160deg,#fff4d6,#ffe1e8)}
+body{height:100dvh;display:flex;justify-content:center}
+#app{position:relative;width:100%;max-width:460px;height:100%;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);overflow:hidden;background:#fbfaf8}
+@media(min-width:600px){body{align-items:center}#app{height:min(calc(100% - 32px),880px);border-radius:36px;box-shadow:0 24px 70px #0003}}
+header{height:58px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-weight:800;font-size:24px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.br{display:flex;align-items:center;gap:9px}
+.br i{font-style:normal;display:grid;place-items:center;width:32px;height:32px;border-radius:11px;font-size:17px;color:#fff;background:linear-gradient(135deg,var(--y),var(--p))}
+.br b{background:linear-gradient(90deg,#f0a500,var(--p));-webkit-background-clip:text;background-clip:text;color:transparent}
+#likes{background:#fff0f3;color:var(--r);padding:5px 14px;border-radius:99px;font-weight:700;font-size:15px}#likes:empty{display:none}
+#deck{flex:1;position:relative;margin:4px 14px 0;min-height:0}
+.card{position:absolute;inset:0;border-radius:28px;background:#fff;box-shadow:0 10px 30px #0002;overflow:hidden;touch-action:pan-y;will-change:transform;user-select:none;-webkit-user-select:none;cursor:grab}
+.card.back{transform:scale(.94) translateY(14px);pointer-events:none;opacity:.9}
+.sc{height:100%;overflow-y:auto;scroll-snap-type:y proximity;scrollbar-width:none;overscroll-behavior:contain}
+.sc::-webkit-scrollbar{display:none}
+.hero{height:100%;scroll-snap-align:start;position:relative;background:linear-gradient(135deg,#ffd86b,#ff8fa3)}
+.ini{position:absolute;inset:0;display:grid;place-items:center;font-size:120px;font-weight:800;color:#fff9}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
+.cap{position:absolute;left:0;right:0;bottom:0;padding:90px 22px 20px;color:#fff;background:linear-gradient(transparent,#000c);font-size:34px;line-height:1.1}
+.cap b{font-weight:800}.ag{font-weight:400;margin-left:10px;opacity:.92}
+.cap small{display:table;font-size:13px;margin-top:12px;padding:5px 12px;border-radius:99px;background:#ffffff2e;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.st{position:absolute;top:36px;left:22px;border:4px solid var(--g);color:var(--g);font-weight:800;font-size:34px;letter-spacing:.06em;padding:0 12px;border-radius:10px;transform:rotate(-14deg);opacity:0;background:#ffffff40}
+.st.n{left:auto;right:22px;border-color:var(--r);color:var(--r);transform:rotate(14deg)}
+.det{min-height:100%;scroll-snap-align:start;padding:14px 24px 44px;background:#fff}
+.det::before{content:"";display:block;width:42px;height:5px;border-radius:5px;background:#e3e3e8;margin:0 auto 18px}
+.det h3{font-size:28px;font-weight:800}
+dt{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#9a9aa3;margin-top:20px;display:flex;align-items:center;gap:8px}dt span{font-size:16px}
+dd{font-size:18px;font-weight:600;margin-top:4px;padding-bottom:16px;border-bottom:1px solid #f0eeee}
+#bar{flex:none;height:calc(104px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);display:flex;justify-content:center;align-items:center;gap:44px}
+#bar button{width:74px;height:74px;padding:0;border:0;border-radius:50%;background:#fff;box-shadow:0 8px 22px #0002;font-size:34px;line-height:1;transition:transform .12s}
+#bar button:active{transform:scale(.88)}
+#x{color:var(--r)}#h{color:var(--g)}
+#scr{position:absolute;inset:0;z-index:9;background:linear-gradient(160deg,#fff4d6,#ffe1e8);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:16px;padding:30px;text-align:center;overflow:auto}
+#scr.top{justify-content:flex-start;padding-top:calc(20px + env(safe-area-inset-top))}
+#scr[hidden]{display:none}
+#scr p{max-width:340px;color:#555}
+.lg{flex:none;width:88px;height:88px;border-radius:28px;display:grid;place-items:center;font-size:46px;color:#fff;background:linear-gradient(135deg,var(--y),var(--p));box-shadow:0 12px 28px #ff6b8140}
+h1{font-size:34px;font-weight:800}
+input:not([type=checkbox]),button,select,textarea{font:inherit;width:100%;max-width:340px;padding:14px 16px;border-radius:16px;border:2px solid #ece8e8;background:#fff;outline:none;cursor:pointer}
+input:focus,select:focus,textarea:focus{border-color:var(--y);cursor:text}
+.pri{background:linear-gradient(135deg,var(--y),#ffab2e);border:0;font-weight:800;box-shadow:0 8px 20px #ffc62966}
+.ad{width:100%;max-width:420px;text-align:left;display:flex;flex-direction:column;gap:12px;background:#fff;padding:20px;border-radius:24px;box-shadow:0 10px 30px #0001}
+.ad button,.ad select,.ad input:not([type=checkbox]){max-width:none}
+.fm{width:100%;max-width:340px;display:flex;flex-direction:column;gap:10px;text-align:left}.fm label{font-size:14px;color:#666}#pv{display:none;width:96px;height:96px;border-radius:50%;object-fit:cover;align-self:center}
+</style></head><body>
+<div id="app"><header><span class="br"><i>♥</i><b>Meet</b></span><span id="likes"></span></header><div id="deck"></div>
+<div id="bar"><button id="x" aria-label="Dislike">✕</button><button id="h" aria-label="Like">♥</button></div><div id="scr" hidden></div></div>
+<script>
+// ===== Editable texts & constants =====
+const STR={
+en:{intro:'You are testing a new dating app. Swipe right (or tap ♥) to like, swipe left (or tap ✕) to pass. Tap a card or scroll down to see more details.',go:'Start',nostim:'No stimuli loaded (open #admin).',ptitle:'Create your profile',gtitle:'About you',email:'Email',pw:'Password',name:'First name',age:'Age',gender:'Gender',g:['Male','Female','Other'],photo:'Profile photo',bio:'About me',create:'Continue',err:'Please complete all required fields (age 18+).',hint:'⌄ Tap or scroll for details',like:'LIKE',nope:'NOPE',det:['Education','Profession','Salary','About'],out:'Out of Likes',outTxt:"You've used all your likes. Thank you for taking part!",end:'No more profiles',endTxt:'Thank you for taking part!',cont:'Continue',save:'Save results file'},
+pt:{intro:'Está a testar uma nova aplicação de encontros. Deslize para a direita (ou toque em ♥) para gostar, para a esquerda (ou toque em ✕) para passar. Toque no cartão ou desloque para baixo para ver mais detalhes.',go:'Começar',nostim:'Sem estímulos carregados (abra #admin).',ptitle:'Crie o seu perfil',gtitle:'Sobre si',email:'Email',pw:'Palavra-passe',name:'Primeiro nome',age:'Idade',gender:'Género',g:['Masculino','Feminino','Outro'],photo:'Fotografia de perfil',bio:'Sobre mim',create:'Continuar',err:'Preencha todos os campos obrigatórios (idade: 18 ou mais).',hint:'⌄ Toque ou deslize para ver detalhes',like:'GOSTO',nope:'NÃO',det:['Formação','Profissão','Salário','Sobre'],out:'Sem gostos disponíveis',outTxt:'Já usou todos os seus gostos. Obrigado pela participação!',end:'Sem mais perfis',endTxt:'Obrigado pela participação!',cont:'Continuar',save:'Guardar ficheiro de resultados'}};
+const DEF={pin:'1234',endpoint:'',pep:'',shuffle:true,counter:true,lang:'pt',ask:true,keep:false};
+const tr=k=>(STR[cfg.lang]||STR.en)[k];
+const DET=0.5; // details count as "viewed" when >=50% of the screen height shows the details panel
+const $=s=>document.querySelector(s),P=new URLSearchParams(location.search);
+const L=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}},W=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+let cfg={...DEF,...L('cfg',{})},ses=L('ses',null),rows=[],cur,T,lock,ok=0;
+const scr=(h,top)=>{const s=$('#scr');s.innerHTML=h;s.hidden=!h;s.className=top?'top':''};
+function csv(t){t=t.replace(/^\uFEFF/,'');const l=t.split('\n')[0],d=(l.match(/;/g)||[]).length>(l.match(/,/g)||[]).length?';':',';
+const o=[];let r=[],c='',q=0;for(let i=0;i<t.length;i++){const h=t[i];
+if(q){if(h=='"'){if(t[i+1]=='"'){c+='"';i++}else q=0}else c+=h}
+else if(h=='"')q=1;else if(h==d){r.push(c);c=''}
+else if(h=='\n'||h=='\r'){if(h=='\r'&&t[i+1]=='\n')i++;r.push(c);c='';if(r.some(x=>x.trim()))o.push(r);r=[]}else c+=h}
+if(c||r.length){r.push(c);if(r.some(x=>x.trim()))o.push(r)}
+const h=(o.shift()||[]).map(x=>x.trim().toLowerCase());return o.map(a=>Object.fromEntries(h.map((k,i)=>[k,(a[i]||'').trim()])))}
+async function load(){try{const r=await fetch('config.json',{cache:'no-store'});if(r.ok)cfg={...DEF,...await r.json(),...L('cfg',{})}}catch{}if(P.get('lang'))cfg.lang=P.get('lang');let t=L('csv',null);if(!t){try{const r=await fetch('stimuli.csv',{cache:'no-store'});if(r.ok)t=await r.text()}catch{}}rows=t?csv(t):[]}
+const conds=()=>[...new Set(rows.map(r=>r.condition).filter(c=>c&&c!='*'))];
+const prof=i=>rows.find(r=>r.profile_id==ses.order[i]);
+const sessions=()=>[...L('all',[]),...(ses&&!ses.done?[ses]:[])];
+const arch=()=>{if(ses&&!ses.done){ses.done='abandoned';const a=L('all',[]);a.push(ses);W('all',a)}};
+const lg=(type,x,y,v)=>ses.ev.push({profile_id:ses.order[ses.i]??'',type,ts:Date.now(),x:x==null?'':Math.round(x),y:y==null?'':Math.round(y),v:v??''});
+function home(){scr(`<div class="lg">♥</div><h1>Meet</h1><p>${esc(tr('intro'))}</p><button class="pri" id="go">${tr('go')}</button><small id="er"></small>`);
+$('#go').onclick=()=>{if(!rows.length)return $('#er').textContent=tr('nostim');pform()}}
+const shrink=f=>new Promise(r=>{const i=new Image();i.onload=()=>{const k=Math.min(1,320/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.6))};i.onerror=()=>r('');i.src=URL.createObjectURL(f)});
+// Profile records carry NO participant ID and NO timestamp, and are inserted at a random position: they cannot be matched to behavioural data.
+function sp(rec){const a=L('prof',[]);a.splice(Math.random()*(a.length+1)|0,0,rec);W('prof',a);if(cfg.pep)fetch(cfg.pep,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(rec)}).catch(()=>{})}
+function pform(){const f=cfg.ask,g=tr('g');
+scr(`<h1>${tr(f?'ptitle':'gtitle')}</h1><div class="fm">${f?`<img id="pv" alt=""><label>${tr('photo')}<input type="file" id="ph" accept="image/*"></label><input id="em" type="email" placeholder="${tr('email')}" autocomplete="off"><input id="pw" type="password" placeholder="${tr('pw')}" autocomplete="off"><input id="nm" placeholder="${tr('name')}" autocomplete="off"><input id="ag" type="number" min="18" max="99" placeholder="${tr('age')}">`:''}<select id="gd"><option value="">${tr('gender')}</option>${['M','F','O'].map((c,i)=>`<option value="${c}">${g[i]}</option>`).join('')}</select>${f?`<textarea id="bi" rows="3" placeholder="${tr('bio')}"></textarea>`:''}<button class="pri" id="mk">${tr('create')}</button><small id="er"></small></div>`,1);
+if(f)$('#ph').onchange=e=>{const v=$('#pv');if(e.target.files[0]){v.src=URL.createObjectURL(e.target.files[0]);v.style.display='block'}};
+$('#mk').onclick=async()=>{const v=id=>f?$('#'+id).value.trim():'',gd=$('#gd').value,ag=+v('ag');
+if(!gd||(f&&(!v('em')||!v('nm')||!(ag>=18&&ag<=99))))return $('#er').textContent=tr('err');
+const file=f&&$('#ph').files[0];
+if(f&&cfg.keep)sp({email:v('em'),name:v('nm'),age:ag,gender:gd,bio:v('bi'),photo:file?await shrink(file):''}); // password is never read or stored
+scr('');begin(gd)}}
+function begin(g){arch();const cs=conds(),ss=sessions(),q=P.get('cond');let cond=cs.find(x=>x==q)||cs[(+q||0)-1];
+if(!cond){const n=cs.map(x=>ss.filter(s=>s.cond==x).length),m=Math.min(...n),o=cs.filter((x,i)=>n[i]==m);cond=o[Math.random()*o.length|0]}
+const cn=cs.indexOf(cond)+1,seq=L('n',1),pid='C'+cn+g+String(seq).padStart(2,'0');W('n',seq+1);
+const d=rows.filter(r=>!r.condition||r.condition=='*'||r.condition==cond);
+if(cfg.shuffle)for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}
+const lim=parseInt((rows.find(r=>r.condition==cond&&r.like_limit)||{}).like_limit)||0;
+ses={pid,cond,cn,g,order:d.map(r=>r.profile_id),i:0,used:0,lim,t0:Date.now(),done:'',rec:[],ev:[]};W('ses',ses);run()}
+function run(){if(ses.lim&&ses.used>=ses.lim)return fin('limit');if(ses.i>=ses.order.length)return fin('end');show(ses.i)}
+function mk(r){const e=document.createElement('div'),v=[r.education,r.profession,r.salary,r.description];e.className='card';
+e.innerHTML=`<div class="sc"><div class="hero"><div class="ini">${esc((r.name||'?')[0])}</div><img src="${esc(r.photo_url)}" onerror="this.remove()" alt=""><div class="st">${tr('like')}</div><div class="st n">${tr('nope')}</div><div class="cap"><b>${esc(r.name)}</b><span class="ag">${esc(r.age)}</span><small>${tr('hint')}</small></div></div><div class="det"><h3>${esc(r.name)}, ${esc(r.age)}</h3><dl>${tr('det').map((k,i)=>`<dt><span>${['🎓','💼','💰','💬'][i]}</span>${k}</dt><dd>${esc(v[i])}</dd>`).join('')}</dl></div></div>`;return e}
+function show(i){const d=$('#deck');d.innerHTML='';const n=prof(i+1);if(n){const b=mk(n);b.classList.add('back');d.append(b)}
+cur=mk(prof(i));d.append(cur);T={on:Date.now(),l:performance.now(),tot:0,det:0,inD:0,hid:document.hidden};arm(cur);lg('profile_on');
+$('#likes').textContent=cfg.counter&&ses.lim?'♥ '+(ses.lim-ses.used):''}
+function tick(){const n=performance.now();if(!T.hid){T.tot+=n-T.l;if(T.inD)T.det+=n-T.l}T.l=n}
+document.addEventListener('visibilitychange',()=>{if(!T||!ses||ses.done)return;tick();T.hid=document.hidden;lg(T.hid?'page_hidden':'page_visible')});
+function arm(e){const sc=e.querySelector('.sc'),dt=e.querySelector('.det'),lk=e.querySelector('.st'),nk=e.querySelector('.n');
+let sx,sy,t0,dx=0,on=0,dr=0,lm=0,ls=0;
+T.io=new IntersectionObserver(([n])=>{tick();const v=n.intersectionRect.height>=DET*sc.clientHeight;if(v!=!!T.inD){T.inD=v;lg(v?'details_enter':'details_exit')}},{root:sc,threshold:Array.from({length:21},(_,i)=>i/20)});T.io.observe(dt);
+e.onpointerdown=v=>{if(lock)return;on=1;dr=0;dx=0;sx=v.clientX;sy=v.clientY;t0=performance.now();lg('touch_start',sx,sy)};
+e.onpointermove=v=>{if(!on)return;dx=v.clientX-sx;const dy=v.clientY-sy;
+if(!dr&&Math.abs(dx)>10&&Math.abs(dx)>Math.abs(dy)){dr=1;e.setPointerCapture(v.pointerId)}
+const n=performance.now();if(n-lm>100){lm=n;lg('touch_move',v.clientX,v.clientY)}
+if(dr){e.style.transform=`translateX(${dx}px) rotate(${dx/20}deg)`;lk.style.opacity=Math.max(0,dx/110);nk.style.opacity=Math.max(0,-dx/110)}};
+e.onpointerup=v=>{if(!on)return;on=0;lg('touch_end',v.clientX,v.clientY);const el=performance.now()-t0;
+if(dr){if(Math.abs(dx)>e.clientWidth*.3||(Math.abs(dx)/el>.6&&Math.abs(dx)>50))decide(dx>0,'swipe');
+else{e.style.transition='transform .2s';e.style.transform='';lk.style.opacity=nk.style.opacity=0;setTimeout(()=>e.style.transition='',200)}}
+else if(Math.abs(dx)<8&&el<300){lg('tap',v.clientX,v.clientY);sc.scrollTo({top:sc.scrollTop<sc.clientHeight/2?dt.offsetTop:0,behavior:'smooth'})}};
+e.onpointercancel=()=>{if(on){on=0;lg('touch_cancel')}};
+sc.onscroll=()=>{const n=performance.now();if(n-ls>100){ls=n;lg('scroll',null,null,Math.round(sc.scrollTop))}}}
+function decide(like,how){if(lock||!cur)return;lock=1;tick();T.io.disconnect();const r=prof(ses.i);if(like)ses.used++;lg(how+(like?'_like':'_dislike'));
+ses.rec.push({participant_id:ses.pid,condition:ses.cond,profile_id:r.profile_id,position:ses.i+1,decision:like?'like':'dislike',input:how,likes_used:ses.used,dwell_total_ms:Math.round(T.tot),dwell_details_ms:Math.round(T.det),onset_ts:T.on,decision_ts:Date.now(),salary_congruency_flag:r.salary_congruency_flag});
+cur.querySelector(like?'.st':'.n').style.opacity=1;cur.style.transition='transform .3s';
+cur.style.transform=`translateX(${(like?1:-1)*innerWidth*1.3}px) rotate(${like?25:-25}deg)`;
+setTimeout(()=>{ses.i++;W('ses',ses);lock=0;run()},300)}
+$('#x').onclick=()=>decide(false,'button');$('#h').onclick=()=>decide(true,'button');
+function fin(r){lg('end_'+r);ses.done=r;ses.end=Date.now();const a=L('all',[]);a.push(ses);W('all',a);W('ses',ses);
+if(cfg.endpoint)fetch(cfg.endpoint,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(ses)}).catch(()=>{});endScr()}
+function endScr(){const lim=ses.done=='limit',ret=P.get('return')||'';
+scr(`<div class="lg">${lim?'♥':'✓'}</div><h1>${tr(lim?'out':'end')}</h1><p>${tr(lim?'outTxt':'endTxt')}</p>${/^https?:/.test(ret)?`<button class="pri" id="rt">${tr('cont')}</button>`:''}${cfg.endpoint?'':`<button id="sv">${tr('save')}</button>`}`);
+if($('#rt'))$('#rt').onclick=()=>location.href=ret;if($('#sv'))$('#sv').onclick=()=>dl(ses.pid+'.json',JSON.stringify([ses]),'application/json')}
+const dl=(n,t,m)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click()};
+const toCsv=a=>{if(!a.length)return'';const k=[...new Set(a.flatMap(Object.keys))];return[k.join(',')].concat(a.map(o=>k.map(c=>{const v=String(o[c]??'');return/[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(','))).join('\n')};
+function exp(k){const s=sessions(),id='study_'+new Date().toISOString().slice(0,10);
+if(k=='j')return dl(id+'.json',JSON.stringify(s,null,1),'application/json');
+const rec=s.flatMap(x=>x.rec),ev=s.flatMap(x=>x.ev.map(e=>({participant_id:x.pid,condition:x.cond,...e})));
+dl(id+(k=='d'?'_decisions':'_events')+'.csv','\uFEFF'+toCsv(k=='d'?rec:ev),'text/csv')}
+function admin(){if(!ok&&prompt('Admin PIN')!==cfg.pin){location.hash='';return}ok=1;
+const cs=conds(),src=L('csv',null)?'uploaded file (this device only)':'stimuli.csv in the app folder';
+scr(`<div class="ad"><h2>Admin</h2><p><b>Stimuli:</b> ${rows.length} profiles, source: ${src}<br>${cs.map(c=>`${esc(c)}: ${rows.filter(r=>r.condition==c).length} profiles, like limit ${(rows.find(r=>r.condition==c&&r.like_limit)||{}).like_limit||'none'}`).join('<br>')}</p>
+<label>Upload stimuli CSV<input type="file" id="f" accept=".csv,text/csv"></label><button id="nc">Use stimuli.csv from the app folder</button>
+<label><input type="checkbox" id="sh" ${cfg.shuffle?'checked':''}> Shuffle profile order</label><label><input type="checkbox" id="ct" ${cfg.counter?'checked':''}> Show likes counter</label>
+<label>Participant language<select id="la"><option value="pt" ${cfg.lang=='pt'?'selected':''}>Português (PT)</option><option value="en" ${cfg.lang=='en'?'selected':''}>English</option></select></label>
+<label><input type="checkbox" id="as" ${cfg.ask?'checked':''}> Ask participants to create a profile</label>
+<label><input type="checkbox" id="kp" ${cfg.keep?'checked':''}> Save profile data (separate, unlinkable file)</label>
+<label>Profile endpoint URL (optional; use a different one from the data endpoint)<input id="pe" value="${esc(cfg.pep)}"></label>
+<label>Next participant number (this device)<input id="nn" type="number" min="1" value="${L('n',1)}"></label>
+<label>Data endpoint URL (optional)<input id="ep" value="${esc(cfg.endpoint)}"></label><label>Admin PIN<input id="pn" value="${esc(cfg.pin)}"></label>
+<p><b>Data:</b> ${sessions().length} sessions, ${L('prof',[]).length} profiles saved on this device</p>
+<button id="ej">Export JSON</button><button id="ed">Export decisions CSV</button><button id="ee">Export events CSV</button>
+<button id="xp">Export profiles JSON (separate file)</button><button id="nx">Next participant (reset session)</button><button id="ca">Delete ALL data</button><button class="pri" id="cl">Close</button></div>`,1);
+[['sh','shuffle','checked'],['ct','counter','checked'],['ep','endpoint','value'],['pn','pin','value'],['la','lang','value'],['as','ask','checked'],['kp','keep','checked'],['pe','pep','value']].forEach(([i,k,p])=>$('#'+i).onchange=e=>{const o=L('cfg',{});o[k]=cfg[k]=e.target[p];W('cfg',o)});$('#nn').onchange=e=>W('n',Math.max(1,+e.target.value||1));
+$('#f').onchange=async e=>{const t=await e.target.files[0].text(),r=csv(t);if(!r.length||!('profile_id'in r[0])||!('condition'in r[0]))return alert('CSV needs profile_id and condition columns');W('csv',t);await load();admin()};
+$('#nc').onclick=async()=>{localStorage.removeItem('csv');await load();admin()};
+$('#ej').onclick=()=>exp('j');$('#xp').onclick=()=>dl('profiles.json',JSON.stringify(L('prof',[]),null,1),'application/json');$('#ed').onclick=()=>exp('d');$('#ee').onclick=()=>exp('e');
+$('#nx').onclick=()=>{arch();localStorage.removeItem('ses');location.hash='';location.reload()};
+$('#ca').onclick=()=>{if(confirm('Delete all stored data on this device?')){['all','ses','prof','n'].forEach(k=>localStorage.removeItem(k));location.reload()}};
+$('#cl').onclick=()=>{location.hash=''}}
+// Admin shortcut for installed PWA (no address bar): press and hold the logo for 1.5 s (PIN still required)
+(()=>{let h;const e=$('.br');e.onpointerdown=()=>{h=setTimeout(()=>{location.hash='admin'},1500)};e.onpointerup=e.onpointerleave=e.onpointercancel=()=>clearTimeout(h)})();
+addEventListener('hashchange',()=>location.reload());
+if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+(async()=>{await load();document.documentElement.lang=cfg.lang;if(location.hash=='#admin')return admin();
+if(ses&&ses.done)endScr();else if(ses){scr('');lg('resume');run()}else home()})();
+</script></body></html>

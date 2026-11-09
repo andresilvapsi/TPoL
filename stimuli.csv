@@ -1,0 +1,8 @@
+profile_id,condition,name,age,education,profession,salary,description,photo_url,like_limit,salary_congruency_flag
+H01,high_salary,Marta,29,MSc Business Administration,Management Consultant,"€4,200/month","Sailing, long dinners and bad puns.",img/H01.jpg,2,1
+H02,high_salary,Rita,31,PhD Economics,Investment Analyst,"€5,000/month","Hiking on weekends, always planning the next trip.",img/H02.jpg,2,1
+H03,high_salary,Ana,27,BSc Law,Junior Lawyer,"€4,500/month","Coffee first, questions later.",img/H03.jpg,2,0
+L01,low_salary,Sofia,28,MSc Psychology,Research Assistant,"€1,100/month","Board games, cats and vinyl records.",img/L01.jpg,2,1
+L02,low_salary,Inês,30,BA Fine Arts,Barista,"€950/month","Painting walls and chasing sunsets.",img/L02.jpg,2,1
+L03,low_salary,Joana,26,BSc Biology,Lab Technician,"€1,200/month","Plant parent, amateur baker.",img/L03.jpg,2,0
+F01,*,Carla,29,BSc Design,UX Designer,"€2,300/month","This filler profile appears in every condition.",img/F01.jpg,,
