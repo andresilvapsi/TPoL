@@ -1,4 +1,4 @@
--- Run once in Supabase > SQL Editor. Participants (anon key) can only INSERT; nobody can read through the app.
+-- Safe to run more than once. Run in Supabase > SQL Editor. Participants (anon key) can only INSERT; nobody can read through the app.
 -- To restart for the real study: truncate the 4 tables and run: alter sequence participant_seq restart;
 create table if not exists sessions(participant_id text primary key, condition_no int, gender text, started_at bigint);
 create table if not exists decisions(id bigint generated always as identity primary key, participant_id text, condition text, profile_id text, position int, decision text, input text, likes_used int, dwell_total_ms int, dwell_details_ms int, onset_ts bigint, decision_ts bigint, salary_congruency_flag text);
@@ -6,9 +6,13 @@ create table if not exists events(id bigint generated always as identity primary
 -- profiles: random uuid, NO participant id, NO timestamp column
 create table if not exists profiles(id uuid primary key default gen_random_uuid(), email text, name text, age int, gender text, bio text, photo text);
 alter table sessions enable row level security; alter table decisions enable row level security; alter table events enable row level security; alter table profiles enable row level security;
+drop policy if exists "ins" on sessions;
 create policy "ins" on sessions for insert to anon with check (true);
+drop policy if exists "ins" on decisions;
 create policy "ins" on decisions for insert to anon with check (true);
+drop policy if exists "ins" on events;
 create policy "ins" on events for insert to anon with check (true);
+drop policy if exists "ins" on profiles;
 create policy "ins" on profiles for insert to anon with check (true);
 -- Global participant numbering + balanced condition assignment (works across all devices)
 create sequence if not exists participant_seq;
@@ -26,3 +30,6 @@ begin
   return json_build_object('pid',pid,'cn',cn,'seq',s);
 end $$;
 grant execute on function new_participant(int,text,int) to anon;
+-- Explicit privileges for the public (anon) key: insert only, no read
+grant usage on schema public to anon;
+grant insert on sessions, decisions, events, profiles to anon;

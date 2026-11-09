@@ -78,8 +78,8 @@ const sessions=()=>[...L('all',[]),...(ses&&!ses.done?[ses]:[])];
 const arch=()=>{if(ses&&!ses.done){ses.done='abandoned';const a=L('all',[]);a.push(ses);W('all',a)}};
 const lg=(type,x,y,v)=>ses.ev.push({profile_id:ses.order[ses.i]??'',type,ts:Date.now(),x:x==null?'':Math.round(x),y:y==null?'':Math.round(y),v:v??''});
 // ===== Supabase remote saving (offline-safe queue) =====
-const sbOn=()=>cfg.sbUrl&&cfg.sbKey,sbBase=()=>cfg.sbUrl.replace(/\/rest\/v1\/?$/,'').replace(/\/+$/,'')+'/rest/v1/';
-const hd=()=>({apikey:cfg.sbKey,'Content-Type':'application/json',...(/^eyJ/.test(cfg.sbKey)?{Authorization:'Bearer '+cfg.sbKey}:{})});
+const sbOn=()=>cfg.sbUrl&&cfg.sbKey,sbBase=()=>cfg.sbUrl.trim().replace(/\/rest\/v1\/?$/,'').replace(/\/+$/,'')+'/rest/v1/';
+const hd=()=>({apikey:cfg.sbKey.trim(),'Content-Type':'application/json',...(/^eyJ/.test(cfg.sbKey.trim())?{Authorization:'Bearer '+cfg.sbKey.trim()}:{})});
 let busy=0;
 function push(t,r,at){if(!sbOn())return;const q=L('oq',[]);q.push({id:Math.random(),t,r,at:at||0});W('oq',q);flush()}
 async function flush(){if(busy||!sbOn())return;busy=1;try{for(const it of L('oq',[])){if(it.at>Date.now())continue;const b=JSON.stringify(it.r);
@@ -165,7 +165,10 @@ scr(`<div class="ad"><h2>Admin</h2><p><b>Stimuli:</b> ${rows.length} profiles, s
 <button id="ej">Export JSON</button><button id="ed">Export decisions CSV</button><button id="ee">Export events CSV</button>
 <button id="xp">Export profiles JSON (separate file)</button><button id="nx">Next participant (reset session)</button><button id="ca">Delete ALL data</button><button class="pri" id="cl">Close</button></div>`,1);
 [['sh','shuffle','checked'],['ct','counter','checked'],['ep','endpoint','value'],['pn','pin','value'],['la','lang','value'],['as','ask','checked'],['kp','keep','checked'],['pe','pep','value'],['su','sbUrl','value'],['sk','sbKey','value']].forEach(([i,k,p])=>$('#'+i).onchange=e=>{const o=L('cfg',{});o[k]=cfg[k]=e.target[p];W('cfg',o)});$('#nn').onchange=e=>W('n',Math.max(1,+e.target.value||1));
-$('#tb').onclick=async()=>{try{const r=await fetch(sbBase()+'events?limit=0',{headers:hd()});alert(r.ok?'Supabase OK':'Error '+r.status)}catch{alert('Network error')}};
+$('#tb').onclick=async()=>{const k=cfg.sbKey.trim();if(!sbOn())return alert('Fill in the Supabase URL and key first.');
+let ro='';try{ro=JSON.parse(atob(k.split('.')[1])).role}catch{}
+if(/^sb_secret_/.test(k)||ro=='service_role')return alert('That is a SECRET key. Use the anon / publishable key instead.');
+try{const r=await fetch(sbBase()+'events',{method:'POST',headers:{...hd(),Prefer:'return=minimal'},body:'[]'});alert(r.ok?'Supabase OK':'Error '+r.status+': '+(await r.text()).slice(0,300))}catch(e){alert('Network error: '+e.message)}};
 $('#f').onchange=async e=>{const t=await e.target.files[0].text(),r=csv(t);if(!r.length||!('profile_id'in r[0])||!('condition'in r[0]))return alert('CSV needs profile_id and condition columns');W('csv',t);await load();admin()};
 $('#nc').onclick=async()=>{localStorage.removeItem('csv');await load();admin()};
 $('#ej').onclick=()=>exp('j');$('#xp').onclick=()=>dl('profiles.json',JSON.stringify(L('prof',[]),null,1),'application/json');$('#ed').onclick=()=>exp('d');$('#ee').onclick=()=>exp('e');
