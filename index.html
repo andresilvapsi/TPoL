@@ -54,9 +54,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--y);cursor:text}
 <script>
 // ===== Editable texts & constants =====
 const STR={
-en:{intro:'You are testing a new dating app. Swipe right (or tap ♥) to like, swipe left (or tap ✕) to pass. Tap a card or scroll down to see more details.',go:'Start',nostim:'No stimuli loaded (open #admin).',ptitle:'Create your profile',gtitle:'About you',email:'Email',pw:'Password',name:'First name',age:'Age',gender:'Gender',g:['Male','Female','Other'],photo:'Profile photo',bio:'About me',create:'Continue',err:'Please complete all required fields (age 18+).',hint:'⌄ Tap or scroll for details',like:'LIKE',nope:'NOPE',det:['Education','Profession','Salary','About'],out:'Out of Likes',outTxt:"You've used all your likes. Thank you for taking part!",end:'No more profiles',endTxt:'Thank you for taking part!',cont:'Continue',save:'Save results file'},
-pt:{intro:'Está a testar uma nova aplicação de encontros. Deslize para a direita (ou toque em ♥) para gostar, para a esquerda (ou toque em ✕) para passar. Toque no cartão ou desloque para baixo para ver mais detalhes.',go:'Começar',nostim:'Sem estímulos carregados (abra #admin).',ptitle:'Crie o seu perfil',gtitle:'Sobre si',email:'Email',pw:'Palavra-passe',name:'Primeiro nome',age:'Idade',gender:'Género',g:['Masculino','Feminino','Outro'],photo:'Fotografia de perfil',bio:'Sobre mim',create:'Continuar',err:'Preencha todos os campos obrigatórios (idade: 18 ou mais).',hint:'⌄ Toque ou deslize para ver detalhes',like:'GOSTO',nope:'NÃO',det:['Formação','Profissão','Salário','Sobre'],out:'Sem gostos disponíveis',outTxt:'Já usou todos os seus gostos. Obrigado pela participação!',end:'Sem mais perfis',endTxt:'Obrigado pela participação!',cont:'Continuar',save:'Guardar ficheiro de resultados'}};
-const DEF={pin:'1234',endpoint:'',pep:'',shuffle:true,counter:true,lang:'pt',ask:true,keep:false};
+en:{intro:'Browse these profiles as you would on a dating app. Swipe right (or tap ♥) to like, swipe left (or tap ✕) to pass. Tap a card or scroll down to see more details.',go:'Start',nostim:'No stimuli loaded (open #admin).',ptitle:'Create your profile',gtitle:'About you',email:'Email',pw:'Password',name:'First name',age:'Age',gender:'Gender',g:['Male','Female','Other'],photo:'Profile photo',bio:'About me',create:'Continue',err:'Please complete all required fields (age 18+).',hint:'⌄ Tap or scroll for details',like:'LIKE',nope:'NOPE',det:['Education','Profession','Salary','About'],out:'Out of Likes',outTxt:"You've used all your likes. Thank you for taking part!",end:'No more profiles',endTxt:'Thank you for taking part!',cont:'Continue',save:'Save results file'},
+pt:{intro:'Explore estes perfis como faria numa aplicação de encontros. Deslize para a direita (ou toque em ♥) para gostar, para a esquerda (ou toque em ✕) para passar. Toque no cartão ou desloque para baixo para ver mais detalhes.',go:'Começar',nostim:'Sem estímulos carregados (abra #admin).',ptitle:'Crie o seu perfil',gtitle:'Sobre si',email:'Email',pw:'Palavra-passe',name:'Primeiro nome',age:'Idade',gender:'Género',g:['Masculino','Feminino','Outro'],photo:'Fotografia de perfil',bio:'Sobre mim',create:'Continuar',err:'Preencha todos os campos obrigatórios (idade: 18 ou mais).',hint:'⌄ Toque ou deslize para ver detalhes',like:'GOSTO',nope:'NÃO',det:['Formação','Profissão','Salário','Sobre'],out:'Sem gostos disponíveis',outTxt:'Já usou todos os seus gostos. Obrigado pela participação!',end:'Sem mais perfis',endTxt:'Obrigado pela participação!',cont:'Continuar',save:'Guardar ficheiro de resultados'}};
+const DEF={pin:'1234',endpoint:'',pep:'',sbUrl:'',sbKey:'',shuffle:true,counter:true,lang:'pt',ask:true,keep:false};
 const tr=k=>(STR[cfg.lang]||STR.en)[k];
 const DET=0.5; // details count as "viewed" when >=50% of the screen height shows the details panel
 const $=s=>document.querySelector(s),P=new URLSearchParams(location.search);
@@ -77,11 +77,23 @@ const prof=i=>rows.find(r=>r.profile_id==ses.order[i]);
 const sessions=()=>[...L('all',[]),...(ses&&!ses.done?[ses]:[])];
 const arch=()=>{if(ses&&!ses.done){ses.done='abandoned';const a=L('all',[]);a.push(ses);W('all',a)}};
 const lg=(type,x,y,v)=>ses.ev.push({profile_id:ses.order[ses.i]??'',type,ts:Date.now(),x:x==null?'':Math.round(x),y:y==null?'':Math.round(y),v:v??''});
+// ===== Supabase remote saving (offline-safe queue) =====
+const sbOn=()=>cfg.sbUrl&&cfg.sbKey,sbBase=()=>cfg.sbUrl.replace(/\/rest\/v1\/?$/,'').replace(/\/+$/,'')+'/rest/v1/';
+const hd=()=>({apikey:cfg.sbKey,'Content-Type':'application/json',...(/^eyJ/.test(cfg.sbKey)?{Authorization:'Bearer '+cfg.sbKey}:{})});
+let busy=0;
+function push(t,r,at){if(!sbOn())return;const q=L('oq',[]);q.push({id:Math.random(),t,r,at:at||0});W('oq',q);flush()}
+async function flush(){if(busy||!sbOn())return;busy=1;try{for(const it of L('oq',[])){if(it.at>Date.now())continue;const b=JSON.stringify(it.r);
+const r=await fetch(sbBase()+it.t,{method:'POST',headers:{...hd(),Prefer:'return=minimal'},body:b,keepalive:b.length<60000});
+if(r.ok||r.status==409)W('oq',L('oq',[]).filter(x=>x.id!=it.id));else if(r.status>=500||[401,403,429].includes(r.status))break}}catch{}busy=0}
+async function alloc(n,g,f){if(!sbOn())return null;try{const r=await fetch(sbBase()+'rpc/new_participant',{method:'POST',headers:hd(),body:JSON.stringify({n,g,forced:f})});return r.ok?await r.json():null}catch{return null}}
+function qev(){if(!sbOn()||!ses)return;const a=ses.ev.slice(ses.es||0);if(!a.length)return;ses.es=ses.ev.length;W('ses',ses);const n=v=>v===''?null:v;
+push('events',a.map(e=>({participant_id:ses.pid,condition:ses.cond,profile_id:String(e.profile_id),type:e.type,ts:e.ts,x:n(e.x),y:n(e.y),v:n(e.v)})))}
+setInterval(flush,15000);addEventListener('online',flush);
 function home(){scr(`<div class="lg">♥</div><h1>Meet</h1><p>${esc(tr('intro'))}</p><button class="pri" id="go">${tr('go')}</button><small id="er"></small>`);
 $('#go').onclick=()=>{if(!rows.length)return $('#er').textContent=tr('nostim');pform()}}
 const shrink=f=>new Promise(r=>{const i=new Image();i.onload=()=>{const k=Math.min(1,320/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.6))};i.onerror=()=>r('');i.src=URL.createObjectURL(f)});
 // Profile records carry NO participant ID and NO timestamp, and are inserted at a random position: they cannot be matched to behavioural data.
-function sp(rec){const a=L('prof',[]);a.splice(Math.random()*(a.length+1)|0,0,rec);W('prof',a);if(cfg.pep)fetch(cfg.pep,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(rec)}).catch(()=>{})}
+function sp(rec){const a=L('prof',[]);a.splice(Math.random()*(a.length+1)|0,0,rec);W('prof',a);push('profiles',[rec],Date.now()+(30+Math.random()*150)*1000);if(cfg.pep)fetch(cfg.pep,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(rec)}).catch(()=>{})}
 function pform(){const f=cfg.ask,g=tr('g');
 scr(`<h1>${tr(f?'ptitle':'gtitle')}</h1><div class="fm">${f?`<img id="pv" alt=""><label>${tr('photo')}<input type="file" id="ph" accept="image/*"></label><input id="em" type="email" placeholder="${tr('email')}" autocomplete="off"><input id="pw" type="password" placeholder="${tr('pw')}" autocomplete="off"><input id="nm" placeholder="${tr('name')}" autocomplete="off"><input id="ag" type="number" min="18" max="99" placeholder="${tr('age')}">`:''}<select id="gd"><option value="">${tr('gender')}</option>${['M','F','O'].map((c,i)=>`<option value="${c}">${g[i]}</option>`).join('')}</select>${f?`<textarea id="bi" rows="3" placeholder="${tr('bio')}"></textarea>`:''}<button class="pri" id="mk">${tr('create')}</button><small id="er"></small></div>`,1);
 if(f)$('#ph').onchange=e=>{const v=$('#pv');if(e.target.files[0]){v.src=URL.createObjectURL(e.target.files[0]);v.style.display='block'}};
@@ -89,14 +101,15 @@ $('#mk').onclick=async()=>{const v=id=>f?$('#'+id).value.trim():'',gd=$('#gd').v
 if(!gd||(f&&(!v('em')||!v('nm')||!(ag>=18&&ag<=99))))return $('#er').textContent=tr('err');
 const file=f&&$('#ph').files[0];
 if(f&&cfg.keep)sp({email:v('em'),name:v('nm'),age:ag,gender:gd,bio:v('bi'),photo:file?await shrink(file):''}); // password is never read or stored
-scr('');begin(gd)}}
-function begin(g){arch();const cs=conds(),ss=sessions(),q=P.get('cond');let cond=cs.find(x=>x==q)||cs[(+q||0)-1];
+$('#mk').disabled=true;begin(gd)}}
+async function begin(g){arch();const cs=conds(),ss=sessions(),q=P.get('cond');let cond=cs.find(x=>x==q)||cs[(+q||0)-1];
+const a=await alloc(cs.length,g,cond?cs.indexOf(cond)+1:0);if(a)cond=cs[a.cn-1];
 if(!cond){const n=cs.map(x=>ss.filter(s=>s.cond==x).length),m=Math.min(...n),o=cs.filter((x,i)=>n[i]==m);cond=o[Math.random()*o.length|0]}
-const cn=cs.indexOf(cond)+1,seq=L('n',1),pid='C'+cn+g+String(seq).padStart(2,'0');W('n',seq+1);
+const cn=cs.indexOf(cond)+1,seq=a?a.seq:L('n',1),pid=a?a.pid:'C'+cn+g+String(seq).padStart(2,'0');if(!a)W('n',seq+1);
 const d=rows.filter(r=>!r.condition||r.condition=='*'||r.condition==cond);
 if(cfg.shuffle)for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}
 const lim=parseInt((rows.find(r=>r.condition==cond&&r.like_limit)||{}).like_limit)||0;
-ses={pid,cond,cn,g,order:d.map(r=>r.profile_id),i:0,used:0,lim,t0:Date.now(),done:'',rec:[],ev:[]};W('ses',ses);run()}
+ses={pid,cond,cn,g,order:d.map(r=>r.profile_id),i:0,used:0,lim,t0:Date.now(),done:'',rec:[],ev:[]};W('ses',ses);if(!a)push('sessions',[{participant_id:pid,condition_no:cn,gender:g,started_at:ses.t0}]);scr('');run()}
 function run(){if(ses.lim&&ses.used>=ses.lim)return fin('limit');if(ses.i>=ses.order.length)return fin('end');show(ses.i)}
 function mk(r){const e=document.createElement('div'),v=[r.education,r.profession,r.salary,r.description];e.className='card';
 e.innerHTML=`<div class="sc"><div class="hero"><div class="ini">${esc((r.name||'?')[0])}</div><img src="${esc(r.photo_url)}" onerror="this.remove()" alt=""><div class="st">${tr('like')}</div><div class="st n">${tr('nope')}</div><div class="cap"><b>${esc(r.name)}</b><span class="ag">${esc(r.age)}</span><small>${tr('hint')}</small></div></div><div class="det"><h3>${esc(r.name)}, ${esc(r.age)}</h3><dl>${tr('det').map((k,i)=>`<dt><span>${['🎓','💼','💰','💬'][i]}</span>${k}</dt><dd>${esc(v[i])}</dd>`).join('')}</dl></div></div>`;return e}
@@ -104,7 +117,7 @@ function show(i){const d=$('#deck');d.innerHTML='';const n=prof(i+1);if(n){const
 cur=mk(prof(i));d.append(cur);T={on:Date.now(),l:performance.now(),tot:0,det:0,inD:0,hid:document.hidden};arm(cur);lg('profile_on');
 $('#likes').textContent=cfg.counter&&ses.lim?'♥ '+(ses.lim-ses.used):''}
 function tick(){const n=performance.now();if(!T.hid){T.tot+=n-T.l;if(T.inD)T.det+=n-T.l}T.l=n}
-document.addEventListener('visibilitychange',()=>{if(!T||!ses||ses.done)return;tick();T.hid=document.hidden;lg(T.hid?'page_hidden':'page_visible')});
+document.addEventListener('visibilitychange',()=>{if(!T||!ses||ses.done)return;tick();T.hid=document.hidden;lg(T.hid?'page_hidden':'page_visible');qev()});
 function arm(e){const sc=e.querySelector('.sc'),dt=e.querySelector('.det'),lk=e.querySelector('.st'),nk=e.querySelector('.n');
 let sx,sy,t0,dx=0,on=0,dr=0,lm=0,ls=0;
 T.io=new IntersectionObserver(([n])=>{tick();const v=n.intersectionRect.height>=DET*sc.clientHeight;if(v!=!!T.inD){T.inD=v;lg(v?'details_enter':'details_exit')}},{root:sc,threshold:Array.from({length:21},(_,i)=>i/20)});T.io.observe(dt);
@@ -120,12 +133,12 @@ else if(Math.abs(dx)<8&&el<300){lg('tap',v.clientX,v.clientY);sc.scrollTo({top:s
 e.onpointercancel=()=>{if(on){on=0;lg('touch_cancel')}};
 sc.onscroll=()=>{const n=performance.now();if(n-ls>100){ls=n;lg('scroll',null,null,Math.round(sc.scrollTop))}}}
 function decide(like,how){if(lock||!cur)return;lock=1;tick();T.io.disconnect();const r=prof(ses.i);if(like)ses.used++;lg(how+(like?'_like':'_dislike'));
-ses.rec.push({participant_id:ses.pid,condition:ses.cond,profile_id:r.profile_id,position:ses.i+1,decision:like?'like':'dislike',input:how,likes_used:ses.used,dwell_total_ms:Math.round(T.tot),dwell_details_ms:Math.round(T.det),onset_ts:T.on,decision_ts:Date.now(),salary_congruency_flag:r.salary_congruency_flag});
+ses.rec.push({participant_id:ses.pid,condition:ses.cond,profile_id:r.profile_id,position:ses.i+1,decision:like?'like':'dislike',input:how,likes_used:ses.used,dwell_total_ms:Math.round(T.tot),dwell_details_ms:Math.round(T.det),onset_ts:T.on,decision_ts:Date.now(),salary_congruency_flag:r.salary_congruency_flag});push('decisions',[ses.rec[ses.rec.length-1]]);qev();
 cur.querySelector(like?'.st':'.n').style.opacity=1;cur.style.transition='transform .3s';
 cur.style.transform=`translateX(${(like?1:-1)*innerWidth*1.3}px) rotate(${like?25:-25}deg)`;
 setTimeout(()=>{ses.i++;W('ses',ses);lock=0;run()},300)}
 $('#x').onclick=()=>decide(false,'button');$('#h').onclick=()=>decide(true,'button');
-function fin(r){lg('end_'+r);ses.done=r;ses.end=Date.now();const a=L('all',[]);a.push(ses);W('all',a);W('ses',ses);
+function fin(r){lg('end_'+r);qev();ses.done=r;ses.end=Date.now();const a=L('all',[]);a.push(ses);W('all',a);W('ses',ses);
 if(cfg.endpoint)fetch(cfg.endpoint,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(ses)}).catch(()=>{});endScr()}
 function endScr(){const lim=ses.done=='limit',ret=P.get('return')||'';
 scr(`<div class="lg">${lim?'♥':'✓'}</div><h1>${tr(lim?'out':'end')}</h1><p>${tr(lim?'outTxt':'endTxt')}</p>${/^https?:/.test(ret)?`<button class="pri" id="rt">${tr('cont')}</button>`:''}${cfg.endpoint?'':`<button id="sv">${tr('save')}</button>`}`);
@@ -146,11 +159,13 @@ scr(`<div class="ad"><h2>Admin</h2><p><b>Stimuli:</b> ${rows.length} profiles, s
 <label><input type="checkbox" id="kp" ${cfg.keep?'checked':''}> Save profile data (separate, unlinkable file)</label>
 <label>Profile endpoint URL (optional; use a different one from the data endpoint)<input id="pe" value="${esc(cfg.pep)}"></label>
 <label>Next participant number (this device)<input id="nn" type="number" min="1" value="${L('n',1)}"></label>
+<label>Supabase URL<input id="su" value="${esc(cfg.sbUrl)}"></label><label>Supabase anon / publishable key (never the secret key)<input id="sk" value="${esc(cfg.sbKey)}"></label><button id="tb">Test Supabase connection</button>
 <label>Data endpoint URL (optional)<input id="ep" value="${esc(cfg.endpoint)}"></label><label>Admin PIN<input id="pn" value="${esc(cfg.pin)}"></label>
-<p><b>Data:</b> ${sessions().length} sessions, ${L('prof',[]).length} profiles saved on this device</p>
+<p><b>Data:</b> ${sessions().length} sessions, ${L('prof',[]).length} profiles on this device, ${L('oq',[]).length} items waiting to upload</p>
 <button id="ej">Export JSON</button><button id="ed">Export decisions CSV</button><button id="ee">Export events CSV</button>
 <button id="xp">Export profiles JSON (separate file)</button><button id="nx">Next participant (reset session)</button><button id="ca">Delete ALL data</button><button class="pri" id="cl">Close</button></div>`,1);
-[['sh','shuffle','checked'],['ct','counter','checked'],['ep','endpoint','value'],['pn','pin','value'],['la','lang','value'],['as','ask','checked'],['kp','keep','checked'],['pe','pep','value']].forEach(([i,k,p])=>$('#'+i).onchange=e=>{const o=L('cfg',{});o[k]=cfg[k]=e.target[p];W('cfg',o)});$('#nn').onchange=e=>W('n',Math.max(1,+e.target.value||1));
+[['sh','shuffle','checked'],['ct','counter','checked'],['ep','endpoint','value'],['pn','pin','value'],['la','lang','value'],['as','ask','checked'],['kp','keep','checked'],['pe','pep','value'],['su','sbUrl','value'],['sk','sbKey','value']].forEach(([i,k,p])=>$('#'+i).onchange=e=>{const o=L('cfg',{});o[k]=cfg[k]=e.target[p];W('cfg',o)});$('#nn').onchange=e=>W('n',Math.max(1,+e.target.value||1));
+$('#tb').onclick=async()=>{try{const r=await fetch(sbBase()+'events?limit=0',{headers:hd()});alert(r.ok?'Supabase OK':'Error '+r.status)}catch{alert('Network error')}};
 $('#f').onchange=async e=>{const t=await e.target.files[0].text(),r=csv(t);if(!r.length||!('profile_id'in r[0])||!('condition'in r[0]))return alert('CSV needs profile_id and condition columns');W('csv',t);await load();admin()};
 $('#nc').onclick=async()=>{localStorage.removeItem('csv');await load();admin()};
 $('#ej').onclick=()=>exp('j');$('#xp').onclick=()=>dl('profiles.json',JSON.stringify(L('prof',[]),null,1),'application/json');$('#ed').onclick=()=>exp('d');$('#ee').onclick=()=>exp('e');
@@ -161,6 +176,6 @@ $('#cl').onclick=()=>{location.hash=''}}
 (()=>{let h;const e=$('.br');e.onpointerdown=()=>{h=setTimeout(()=>{location.hash='admin'},1500)};e.onpointerup=e.onpointerleave=e.onpointercancel=()=>clearTimeout(h)})();
 addEventListener('hashchange',()=>location.reload());
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-(async()=>{await load();document.documentElement.lang=cfg.lang;if(location.hash=='#admin')return admin();
+(async()=>{await load();flush();document.documentElement.lang=cfg.lang;if(location.hash=='#admin')return admin();
 if(ses&&ses.done)endScr();else if(ses){scr('');lg('resume');run()}else home()})();
 </script></body></html>
